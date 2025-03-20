@@ -1,0 +1,93 @@
+name: Build ImmortalWrt with PassWall (All-in-One)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    # 1. 检出代码（ImmortalWrt 源码）
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 安装编译所需依赖
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib \
+            gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
+
+    # 3. 添加 PassWall 源（如 feeds.conf.default 还没有）
+    - name: Add PassWall feed
+      run: |
+        # 如果已经在 feeds.conf.default 里添加过，就不需要再添加。
+        # 若想自行查看，可先 cat feeds.conf.default 看看是否已有 passwall。
+        echo "src-git passwall https://github.com/xiaorouji/openwrt-passwall.git;main" >> feeds.conf.default
+        echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> feeds.conf.default
+        
+    # 4. 更新并安装feed
+    - name: Update feeds
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    # 5. 生成编译配置 .config
+    - name: Generate config
+      run: |
+        # (1) 指定目标: MTK Filogic / Cudy TR3000
+        echo "CONFIG_TARGET_mediatek=y" > .config
+        echo "CONFIG_TARGET_mediatek_filogic=y" >> .config
+        echo "CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y" >> .config
+
+        # (2) 调整 Rootfs 大小 (酌情)
+        echo "CONFIG_TARGET_ROOTFS_PARTSIZE=112" >> .config
+
+        # (3) 基础 LuCI + 中文包 + SSL
+        echo "CONFIG_PACKAGE_luci=y" >> .config
+        echo "CONFIG_PACKAGE_luci-ssl-openssl=y" >> .config
+        echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
+
+        # (4) 安装 PassWall 主体 + 中文翻译
+        echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
+        echo "CONFIG_PACKAGE_luci-i18n-passwall-zh-cn=y" >> .config
+
+        # (5) PassWall 可能需要的转发/代理工具：
+        #     (部分包较大，请按需添加或删除)
+
+        # 可以按需添加更多工具，例如：
+        # echo "CONFIG_PACKAGE_brook=y" >> .config
+        # echo "CONFIG_PACKAGE_naiveproxy=y" >> .config
+        # echo "CONFIG_PACKAGE_hysteria=y" >> .config
+        # echo "CONFIG_PACKAGE_gost=y" >> .config
+        # ...等
+
+        # (6) 由于 ImmortalWrt 中以下模块名不存在或不匹配，这里先不强制安装:
+        #echo "CONFIG_PACKAGE_kmod-nft-socket=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-nft-tproxy=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-inet-diag=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-netlink-diag=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-tun=y" >> .config
+        #
+        # 如果你通过 menuconfig 确认有相应模块（名称不同）再改为对应项。
+
+        # (7) Dnsmasq-full 可能需要替换默认 dnsmasq
+        # 以满足更多 DNS 需求
+        echo "CONFIG_PACKAGE_dnsmasq-full=y" >> .config
+
+        # 生成默认配置
+        make defconfig
+
+    # 6. 编译固件
+    - name: Build firmware
+      run: |
+        # 多线程编译，如果失败再用单线程查看详细日志
+        make -j"$(nproc)" || make -j1 V=s
+
+    # 7. 上传编译产物 (固件)
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: immortalwrt-cudy-tr3000-passwall
+        path: bin/targets/mediatek/filogic/*.bin
