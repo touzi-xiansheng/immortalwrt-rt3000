@@ -25,7 +25,8 @@ jobs:
         # 如果已经在 feeds.conf.default 里添加过，就不需要再添加。
         # 若想自行查看，可先 cat feeds.conf.default 看看是否已有 passwall。
         echo "src-git passwall https://github.com/xiaorouji/openwrt-passwall.git;main" >> feeds.conf.default
-
+        echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> feeds.conf.default
+        
     # 4. 更新并安装feed
     - name: Update feeds
       run: |
@@ -54,17 +55,7 @@ jobs:
 
         # (5) PassWall 可能需要的转发/代理工具：
         #     (部分包较大，请按需添加或删除)
-        echo "CONFIG_PACKAGE_dns2socks=y" >> .config
-        echo "CONFIG_PACKAGE_ipt2socks=y" >> .config
-        echo "CONFIG_PACKAGE_pdnsd-alt=y" >> .config
-        echo "CONFIG_PACKAGE_dnsforwarder=y" >> .config
-        echo "CONFIG_PACKAGE_simple-obfs=y" >> .config
-        echo "CONFIG_PACKAGE_v2ray-plugin=y" >> .config
-        echo "CONFIG_PACKAGE_xray-core=y" >> .config
-        echo "CONFIG_PACKAGE_trojan=y" >> .config
-        echo "CONFIG_PACKAGE_trojan-go=y" >> .config
-        echo "CONFIG_PACKAGE_shadowsocks-rust-sslocal=y" >> .config
-        echo "CONFIG_PACKAGE_shadowsocks-rust-ssserver=y" >> .config
+
         # 可以按需添加更多工具，例如：
         # echo "CONFIG_PACKAGE_brook=y" >> .config
         # echo "CONFIG_PACKAGE_naiveproxy=y" >> .config
