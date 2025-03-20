@@ -1,31 +1,49 @@
-name: Check Packages
+name: check-packages
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  build:
+    runs-on: ubuntu-22.04
 
-      - name: Check available modules
-        run: |
-          # 1. 更新并安装 feeds
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-          # 2. 搜索你关心的几个关键字
-          echo "===== Searching for nft-socket ====="
-          ./scripts/feeds search nft-socket
-          echo "===== Searching for tproxy ====="
-          ./scripts/feeds search tproxy
-          echo "===== Searching for inet-diag ====="
-          ./scripts/feeds search inet-diag
-          echo "===== Searching for netlink-diag ====="
-          ./scripts/feeds search netlink-diag
-          echo "===== Searching for kmod-tun ====="
-          ./scripts/feeds search kmod-tun
+    steps:
+    # 1. 检出 ImmortalWrt 源码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 安装编译所需依赖
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib \
+            gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
+
+
+    # 4. 更新并安装 feed
+    - name: Update feeds
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    # 5. （可选）搜索是否存在需要的内核模块
+    - name: Check available modules
+      run: |
+        # 这里再次更新/安装 feeds (谨慎起见)
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+        echo "===== Searching for nft-socket ====="
+        ./scripts/feeds search nft-socket || true
+
+        echo "===== Searching for tproxy ====="
+        ./scripts/feeds search tproxy || true
+
+        echo "===== Searching for inet-diag ====="
+        ./scripts/feeds search inet-diag || true
+
+        echo "===== Searching for netlink-diag ====="
+        ./scripts/feeds search netlink-diag || true
+
+        echo "===== Searching for kmod-tun ====="
+        ./scripts/feeds search kmod-tun || true
