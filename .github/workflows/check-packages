@@ -1,0 +1,21 @@
+- name: Check available modules
+  run: |
+    # 1. 更新并安装 feeds
+    ./scripts/feeds update -a
+    ./scripts/feeds install -a
+
+    # 2. 搜索你关心的几个关键字
+    echo "===== Searching for nft-socket ====="
+    ./scripts/feeds search nft-socket
+
+    echo "===== Searching for tproxy ====="
+    ./scripts/feeds search tproxy
+
+    echo "===== Searching for inet-diag ====="
+    ./scripts/feeds search inet-diag
+
+    echo "===== Searching for netlink-diag ====="
+    ./scripts/feeds search netlink-diag
+
+    echo "===== Searching for kmod-tun ====="
+    ./scripts/feeds search kmod-tun
