@@ -73,11 +73,11 @@ jobs:
         # ...等
 
         # (6) 由于 ImmortalWrt 中以下模块名不存在或不匹配，这里先不强制安装:
-        echo "CONFIG_PACKAGE_kmod-nft-socket=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-nft-tproxy=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-inet-diag=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-netlink-diag=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-tun=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-nft-socket=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-nft-tproxy=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-inet-diag=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-netlink-diag=y" >> .config
+        #echo "CONFIG_PACKAGE_kmod-tun=y" >> .config
         #
         # 如果你通过 menuconfig 确认有相应模块（名称不同）再改为对应项。
 
